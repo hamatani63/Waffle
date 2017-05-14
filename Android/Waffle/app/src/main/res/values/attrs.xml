@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="BarGraphView">
+        <attr name="android:maxWidth"/>
+        <attr name="elevation"/>
+        <attr name="itemIconTint" format="color"/>
+        <attr name="menu" format="reference"/>
+        <attr name="itemBackground" format="reference"/>
+    </declare-styleable>
+</resources>

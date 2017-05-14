@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Waffle</string>
+
+    <string name="title_home">Text</string>
+    <string name="title_dashboard">Bar Chart</string>
+    <string name="title_notifications">Line Chart</string>
+    <string name="title_home_message">Text data will be displayed when the device is connected.</string>
+
+    <string name="menu_connected">CONNECTED</string>
+    <string name="menu_disconnected">DISCONNECTED</string>
+
+    <string name="snackbar_connected">Connected to Waffle!</string>
+    <string name="snackbar_connection_failed">Connection failed.</string>
+    <string name="snackbar_disconnected">Disconnected.</string>
+
+    <string name="bar_graph_sensor_value">Null</string>
+</resources>
