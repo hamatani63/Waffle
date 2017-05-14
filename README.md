@@ -33,8 +33,9 @@ Groveセンサについてはこちらを参照してください。
 ![Waffle logo](img/web_hi_res_512.png)
 
 ### サンプルアプリ
-まず、こちらからサンプルアプリをダウンロードしてください。
-（Google Playのリンク）
+こちらからサンプルアプリをダウンロードすることができます。
+
+<a href='http://play.google.com/store/apps/details?id=com.luckyblaze.waffle&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Google Play で手に入れよう' src='https://play.google.com/intl/en_us/badges/images/generic/ja_badge_web_generic.png'/></a>
 
 アプリを起動して、Waffle基板がAndroidスマホにつながっている状態で、右上の「DISCONNECTED」の部分をタップしてください。接続確認ダイアログが出るので、OKをタップすると、Waffle基板からのテキストデータ受信を開始します。
 
