@@ -1,4 +1,5 @@
 #include <ArduinoJson.h>
+#define DHT11_PIN 0      // ADC0
 
 // Memory pool for JSON object tree.
 // Inside the brackets, 200 is the size of the pool in bytes.
@@ -6,7 +7,7 @@
 StaticJsonBuffer<200> jsonBuffer;
 JsonObject& json = jsonBuffer.createObject();
 
-#define DHT11_PIN 0      // ADC0
+int sensorValue = 0;
 
 byte read_dht11_dat()
 {
@@ -77,10 +78,12 @@ void loop()
         Serial.println("DHT11 checksum error");
     }
 
-    for(i=0; i<50; i++){
+    sensorValue = dht11_dat[0]*10.24;
+    
+    for(i=0; i<30; i++){
       json["humdity"] = dht11_dat[0];
       json["temperature"] = dht11_dat[2];
-      json["A0"] = dht11_dat[0]*10.23;
+      json["A0"] = sensorValue;
       json.printTo(Serial);
       Serial.println();
     }
