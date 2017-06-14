@@ -10,8 +10,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.LinearLayout;
 
+import com.mlkcca.client.DataElement;
+import com.mlkcca.client.DataElementValue;
+import com.mlkcca.client.DataStore;
+import com.mlkcca.client.DataStoreEventListener;
+import com.mlkcca.client.MilkCocoa;
+import com.mlkcca.client.MilkcocoaException;
+import com.mlkcca.client.Streaming;
+import com.mlkcca.client.StreamingListener;
 import com.physicaloid.lib.Physicaloid;
 import com.physicaloid.lib.usb.driver.uart.ReadLisener;
 
@@ -19,19 +28,32 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Date;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DataStoreEventListener {
 
     private String TAG = MainActivity.class.getSimpleName();
     private Physicaloid mPhysicaloid;
     private LinearLayout parentLayout;
 
+    //display datas
     private Handler mHandler;
     private JSONObject mJson;
+    private int val = 0;
     private TextFragment mTextFragment;
     private BarGraphFragment mBarGraphFragment;
     private ChartFragment mChartFragment;
 
+    //connect Milkcocoa
+    private MilkCocoa milkcocoa;
+    private DataStore messagesDataStore;
+
+    //Send data according to a timer
+    private int timer = 0;
+    private Runnable mTimerCode;
+
+    //tab bar with fragments
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
@@ -104,19 +126,89 @@ public class MainActivity extends AppCompatActivity {
             }
             displayTextFragment();
         }
-
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         mPhysicaloid = new Physicaloid(getApplicationContext());
         parentLayout = (LinearLayout) findViewById(R.id.container);
         mHandler = new Handler();
+
+        connectMilkcocoa();
+    }
+
+    private void connectMilkcocoa() {
+        if (this.milkcocoa != null) {
+            this.milkcocoa.disconnect();
+        }
+
+        try {
+            this.milkcocoa = new MilkCocoa("teaj3hcxz3s.mlkcca.com");
+        } catch (MilkcocoaException e) {
+            e.printStackTrace();
+        }
+
+        if (this.milkcocoa != null) {
+            this.messagesDataStore = this.milkcocoa.dataStore("bucket");
+//            Streaming stream = this.messagesDataStore.streaming();
+//            stream.size(25);
+//            stream.sort("desc");
+//            stream.addStreamingListener(new StreamingListener() {
+//
+//                @Override
+//                public void onData(ArrayList<DataElement> arg0) {
+//                }
+//
+//                @Override
+//                public void onError(Exception e) {
+//                    e.printStackTrace();
+//                }
+//            });
+//            stream.next();
+//
+//            this.messagesDataStore.addDataStoreEventListener(this);
+//            this.messagesDataStore.on("push");
+        }
+    }
+
+    public void sendDataToMilkcocoa(int val){
+        DataElementValue params = new DataElementValue();
+        params.put("sensorValue", val);
+        Date date = new Date();
+        params.put("date", date.getTime());
+        if (this.messagesDataStore != null) {
+            this.messagesDataStore.send(params);
+        }
+    }
+
+    @Override
+    public void onPushed(DataElement dataElement) {
+    }
+    @Override
+    public void onSetted(DataElement dataElement) {
+    }
+    @Override
+    public void onSended(DataElement dataElement) {
+    }
+    @Override
+    public void onRemoved(DataElement dataElement) {
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         disconnectWaffle();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startTimer();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopTimer();
     }
 
     @Override
@@ -156,10 +248,12 @@ public class MainActivity extends AppCompatActivity {
                     public void onRead(int size) {
                         final byte[] buf = new byte[size];
                         mPhysicaloid.read(buf, size);
+//                        Log.i(TAG, String.valueOf(size));
 
                         final String readStr;
                         try {
                             readStr = new String(buf, "UTF-8");
+//                            Log.i(TAG, "readStr is " + readStr);
                         } catch (UnsupportedEncodingException e) {
                             return;
                         }
@@ -169,25 +263,28 @@ public class MainActivity extends AppCompatActivity {
                             public void run() {
                                 if (parseJson(readStr) != null) {
                                     mJson = parseJson(readStr);
+//                                    Log.i(TAG, "parsed JSON is " + String.valueOf(mJson));
+                                    try {
+                                        Double temp = mJson.getDouble("A0") / 1023 * 100;
+                                        val = temp.intValue();
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
                                     //for TextFragment
                                     if (mTextFragment != null) {
                                         mTextFragment.setJsonData(mJson);
                                     }
                                     //for BarGraphFragment
                                     if (mBarGraphFragment != null) {
-                                        try {
-                                            mBarGraphFragment.setPercent(mJson.getDouble("A0")/1023*100);
-                                        } catch (JSONException e) {
-                                            e.printStackTrace();
-                                        }
+                                        mBarGraphFragment.setPercent(val);
                                     }
                                     //for ChartFragment
+
                                 }
                             }
                         });
                     }
                 });
-
             } else {
                 Snackbar.make(parentLayout, R.string.snackbar_connection_failed, Snackbar.LENGTH_SHORT)
                         .setAction("Action", null).show();
@@ -214,6 +311,28 @@ public class MainActivity extends AppCompatActivity {
             //e.printStackTrace();
             return null;
         }
+    }
+
+    // Timer
+    private void startTimer(){
+        // Start a timer
+        mTimerCode = new Runnable() {
+            @Override
+            public void run() {
+                // Repeat this the same runnable code block again another 5 seconds
+                mHandler.postDelayed(this, 5000);
+                // Send data to Milkcocoa
+                if(mPhysicaloid.isOpened()){
+                    sendDataToMilkcocoa(val);
+                }
+            }
+        };
+        mHandler.post(mTimerCode);
+    }
+
+    private void stopTimer(){
+        // Removes pending code execution
+        mHandler.removeCallbacks(mTimerCode);
     }
 
 }

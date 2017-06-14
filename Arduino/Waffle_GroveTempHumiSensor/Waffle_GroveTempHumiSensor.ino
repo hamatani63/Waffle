@@ -78,11 +78,11 @@ void loop()
         Serial.println("DHT11 checksum error");
     }
 
-    sensorValue = dht11_dat[0]*10.24;
+    sensorValue = int(dht11_dat[0]*10.24);
     
     for(i=0; i<30; i++){
-      json["humdity"] = dht11_dat[0];
-      json["temperature"] = dht11_dat[2];
+      json["humd"] = dht11_dat[0];
+      json["temp"] = dht11_dat[2];
       json["A0"] = sensorValue;
       json.printTo(Serial);
       Serial.println();

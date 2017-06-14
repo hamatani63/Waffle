@@ -31,4 +31,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile files('libs/physicaloidlibrary.jar')
     compile files('libs/d2xx.jar')
+    compile files('libs/milkcocoa-dev.jar')
 }
