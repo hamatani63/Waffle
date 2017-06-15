@@ -8,10 +8,14 @@
 
     <string name="menu_connected">CONNECTED</string>
     <string name="menu_disconnected">DISCONNECTED</string>
+    <string name="milkcocoa_setting">Connect to Milkcocoa</string>
+    <string name="title_dialog">Input your Milkcocoa app_id</string>
 
     <string name="snackbar_connected">Connected to Waffle!</string>
     <string name="snackbar_connection_failed">Connection failed.</string>
     <string name="snackbar_disconnected">Disconnected.</string>
+    <string name="milkcocoa_available">Milkcocoa connection succeeded!</string>
+    <string name="milkcocoa_unavailable">Milkcocoa connection failed…</string>
 
     <string name="bar_graph_sensor_value">Null</string>
 </resources>

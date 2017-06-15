@@ -1,17 +1,24 @@
 package com.luckyblaze.waffle;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.mlkcca.client.DataElement;
 import com.mlkcca.client.DataElementValue;
@@ -36,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements DataStoreEventLis
     private String TAG = MainActivity.class.getSimpleName();
     private Physicaloid mPhysicaloid;
     private LinearLayout parentLayout;
+    private View mLayout;
 
     //display datas
     private Handler mHandler;
@@ -48,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements DataStoreEventLis
     //connect Milkcocoa
     private MilkCocoa milkcocoa;
     private DataStore messagesDataStore;
+    private String milkcocoaAppId = "";
 
     //Send data according to a timer
     private int timer = 0;
@@ -113,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements DataStoreEventLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mLayout = findViewById(R.id.content);
 
         if(savedInstanceState==null){
             try {
@@ -132,23 +142,26 @@ public class MainActivity extends AppCompatActivity implements DataStoreEventLis
         mPhysicaloid = new Physicaloid(getApplicationContext());
         parentLayout = (LinearLayout) findViewById(R.id.container);
         mHandler = new Handler();
-
-        connectMilkcocoa();
     }
 
-    private void connectMilkcocoa() {
+    private void connectMilkcocoa(String appId) {
+        this.messagesDataStore = null;
+
         if (this.milkcocoa != null) {
-            this.milkcocoa.disconnect();
+            if(this.milkcocoa.getSession() != null){
+                this.milkcocoa.disconnect();
+            }
         }
 
         try {
-            this.milkcocoa = new MilkCocoa("teaj3hcxz3s.mlkcca.com");
+            this.milkcocoa = new MilkCocoa(appId);
         } catch (MilkcocoaException e) {
             e.printStackTrace();
         }
 
-        if (this.milkcocoa != null) {
+        if (this.milkcocoa.getSession() != null) {
             this.messagesDataStore = this.milkcocoa.dataStore("bucket");
+            Snackbar.make(mLayout, R.string.milkcocoa_available, Snackbar.LENGTH_SHORT).show();
 //            Streaming stream = this.messagesDataStore.streaming();
 //            stream.size(25);
 //            stream.sort("desc");
@@ -167,6 +180,8 @@ public class MainActivity extends AppCompatActivity implements DataStoreEventLis
 //
 //            this.messagesDataStore.addDataStoreEventListener(this);
 //            this.messagesDataStore.on("push");
+        } else {
+            Snackbar.make(mLayout, R.string.milkcocoa_unavailable, Snackbar.LENGTH_SHORT).show();
         }
     }
 
@@ -177,6 +192,16 @@ public class MainActivity extends AppCompatActivity implements DataStoreEventLis
         params.put("date", date.getTime());
         if (this.messagesDataStore != null) {
             this.messagesDataStore.send(params);
+        }
+    }
+
+    public void pushDataToMilkcocoa(int val){
+        DataElementValue params = new DataElementValue();
+        params.put("sensorValue", val);
+        Date date = new Date();
+        params.put("date", date.getTime());
+        if (this.messagesDataStore != null) {
+            this.messagesDataStore.push(params);
         }
     }
 
@@ -233,8 +258,35 @@ public class MainActivity extends AppCompatActivity implements DataStoreEventLis
             case R.id.menu_disconnected:
                 connectWaffle();
                 break;
+            case R.id.milkcocoa_setting:
+                showMilkcocoaDialog();
+                break;
         }
         return true;
+    }
+
+    public void showMilkcocoaDialog(){
+        LayoutInflater inflater = LayoutInflater.from(this);
+        final LinearLayout layout = (LinearLayout)inflater.inflate(R.layout.dialog, (ViewGroup)findViewById(R.id.layout_dialog));
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(layout);
+        TextView appIdText = (TextView)layout.findViewById(R.id.appId_text);
+        appIdText.setText(milkcocoaAppId);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                EditText text = (EditText)layout.findViewById(R.id.edit_text);
+                milkcocoaAppId = text.getText().toString();
+                connectMilkcocoa(milkcocoaAppId + ".mlkcca.com");
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                // nothing to do
+            }
+        });
+        builder.create().show();
     }
 
     public void connectWaffle(){
@@ -323,7 +375,7 @@ public class MainActivity extends AppCompatActivity implements DataStoreEventLis
                 mHandler.postDelayed(this, 5000);
                 // Send data to Milkcocoa
                 if(mPhysicaloid.isOpened()){
-                    sendDataToMilkcocoa(val);
+                    pushDataToMilkcocoa(val);
                 }
             }
         };

@@ -11,4 +11,9 @@
         android:orderInCategory="101"
         android:title="@string/menu_disconnected"
         app:showAsAction="ifRoom|withText"/>
+    <item
+        android:id="@+id/milkcocoa_setting"
+        android:orderInCategory="102"
+        android:title="@string/milkcocoa_setting"
+        app:showAsAction="never"/>
 </menu>
